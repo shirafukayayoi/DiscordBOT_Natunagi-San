@@ -3,3 +3,4 @@ memo.py
 token.json
 command/__pycache__/GoogleCalendarTemplate.cpython-312.pyc
 .env
+config.json

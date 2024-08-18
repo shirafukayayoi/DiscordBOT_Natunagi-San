@@ -28,8 +28,8 @@ class RSSHandler:
                 except Exception as e:
                     print(f"RSSフィードの処理中にエラーが発生しました: {e}")
 
-            # 60秒ごとにチェック
-            await asyncio.sleep(60)
+            # 1時間ごとにRSSフィードをチェック
+            await asyncio.sleep(3600)
 
     def add_rss_url(self, url):
         if url not in self.rss_urls:

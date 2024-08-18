@@ -4,3 +4,4 @@ token.json
 command/__pycache__/GoogleCalendarTemplate.cpython-312.pyc
 .env
 config.json
+sheet_credentials.json

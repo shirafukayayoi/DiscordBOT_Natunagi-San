@@ -1,15 +1,16 @@
 import discord
 from discord.ext import commands
-
 import os
 import json
 from command.GoogleCalendarTemplate import CalendarMain
 from function.rss_handler import RSSHandler
+from function.youtube_notification import YoutubeNotification
 from discord.ext import tasks
 import asyncio
 from function.task_message import TaskMessage
 from typing import List
 from discord import app_commands
+from autocomplete.auto_playlist import autocomplete_playlist
 
 # configファイルのパス
 CONFIG_FILE = "config.json"
@@ -31,6 +32,7 @@ class MyBot(commands.Bot):
         super().__init__(command_prefix=command_prefix, intents=intents)
         self.config = config
         self.rss_urls = config.get("rss_urls", [])
+        self.youtube_rss = config.get("youtube_rss", [])
         self.channel_id = int(os.environ["CHANNEL_ID"])  # チャンネルIDをここで設定（または環境変数から取得）
 
     async def setup_hook(self):
@@ -61,12 +63,21 @@ class MyBot(commands.Bot):
         self.rss_handler = RSSHandler(self)
         self.loop.create_task(self.rss_handler.check_rss_feed())
 
+        self.youtube_notification = YoutubeNotification(self)
+        self.loop.create_task(self.youtube_notification.check_rss_feed())
+
     def add_rss_url(self, url):
         if self.rss_handler.add_rss_url(url):
             self.config["rss_urls"] = self.rss_urls
             save_config(self.config)
             return True
         return False
+
+    def add_youtube_rss_url(self, url):
+        if self.youtube_notification.add_rss_url(url):
+            self.config["youtube_rss"] = self.youtube_rss
+            save_config(self.config)
+            return True
 
 
 # intentsの設定
@@ -147,19 +158,6 @@ async def send_minute(interaction: discord.Interaction, minutes: int):
 
     await interaction.response.send_message(f"メッセージ送信間隔を{minutes}分に設定しました。以下のメッセージが送信されます。")
 
-
-async def autocomplete_playlist(
-    interaction: discord.Interaction,
-    current: str
-) -> List[app_commands.Choice[str]]:
-    fruits = ["とにかく詰め込め！", "ブルーアーカイブOST"]
-    choices = []
-    playlist = interaction.data.get("options")[0].get("value")
-    for fruit in fruits:
-        if playlist.lower() in fruit.lower():
-            choices.append(app_commands.Choice(name=fruit, value=fruit))
-    return choices
-
 @bot.tree.command(name='summon-playlist', description='プレイリストを呼び出します')
 @app_commands.autocomplete(playlist=autocomplete_playlist)
 async def summon_playlist(interaction: discord.Interaction, playlist: str):
@@ -167,7 +165,31 @@ async def summon_playlist(interaction: discord.Interaction, playlist: str):
         await interaction.response.send_message("https://youtube.com/playlist?list=PLHh1qLt2rZLK4QFgf_W0pZLAMSiipfT3o&si=pf23FQmirl2agzLt")
     elif playlist == "ブルーアーカイブOST":
         await interaction.response.send_message("https://youtube.com/playlist?list=PLh6Ws4Fpphfqr7VL72Q6HK5Ole9YI54hv&si=yL9IWx3zvuuw3YcP")
-        # ここに特定のURLをメッセージ送信するコードを追加してください
+
+@bot.tree.command(name='youtube-set-rss', description='YouTubeのRSSフィードのURLを追加します')
+async def youtube_setrss(interaction: discord.Interaction, url: str):
+    if bot.add_youtube_rss_url(url):
+        await interaction.response.send_message(f"RSS URLが追加されました: {url}")
+    else:
+        await interaction.response.send_message(f"このRSS URLは既に追加されています。")
+
+@bot.tree.command(name='youtube-list-rss', description='登録されているYouTubeのRSSフィードのURLを表示します')
+async def youtube_listrss(interaction: discord.Interaction):
+    if bot.youtube_rss:
+        url_list = "\n".join(bot.youtube_rss)
+        await interaction.response.send_message(f"登録されているRSS URLリスト:\n{url_list}")
+    else:
+        await interaction.response.send_message("現在、登録されているRSS URLはありません。")
+
+@bot.tree.command(name='youtube-remove-rss', description='登録されているYouTubeのRSSフィードのURLを削除します')
+async def youtube_removerss(interaction: discord.Interaction, url: str):
+    if url in bot.youtube_rss:
+        bot.youtube_rss.remove(url)
+        bot.config["youtube_rss"] = bot.youtube_rss
+        save_config(bot.config)
+        await interaction.response.send_message(f"RSS URLが削除されました: {url}")
+    else:
+        await interaction.response.send_message(f"このRSS URLは登録されていません。")
 
 # ボットを実行
 TOKEN = os.getenv('TOKEN')

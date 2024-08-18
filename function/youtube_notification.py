@@ -34,7 +34,7 @@ class YoutubeNotification:
         self.rss_urls = bot.youtube_rss
         self.latest_entry_ids = {}  # 各RSSの最新のIDを格納する辞書
         self.google_spreadsheet = GoogleSpreadsheet()
-        self.google_spreadsheet.write_data()
+        self.google_spreadsheet.write_data(["Title", "Link", "Published"])
     
     async def check_rss_feed(self):
         channel_id = int(os.environ["CHANNEL_ID"])

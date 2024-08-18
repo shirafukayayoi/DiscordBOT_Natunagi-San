@@ -79,7 +79,6 @@ class MyBot(commands.Bot):
             save_config(self.config)
             return True
 
-
 # intentsの設定
 intents = discord.Intents.default()
 intents.message_content = True
@@ -190,6 +189,19 @@ async def youtube_removerss(interaction: discord.Interaction, url: str):
         await interaction.response.send_message(f"RSS URLが削除されました: {url}")
     else:
         await interaction.response.send_message(f"このRSS URLは登録されていません。")
+
+@bot.tree.command(name='remove-text', description='指定したユーザーのメッセージを削除します')
+async def remove_text(interaction: discord.Interaction, user: discord.User, limit: int):
+    if limit > 50:
+        await interaction.response.send_message("50以下にして！！！")
+        return
+
+    # 先にレスポンスを送信するために defer() を使用
+    await interaction.response.defer()
+
+    async for message in interaction.channel.history(limit=limit):
+        if message.author == user:
+            await message.delete()
 
 # ボットを実行
 TOKEN = os.getenv('TOKEN')

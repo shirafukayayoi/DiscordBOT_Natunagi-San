@@ -9,7 +9,7 @@ class RSSHandler:
         self.latest_entry_ids = {}  # 各RSSの最新のIDを格納する辞書
 
     async def check_rss_feed(self):
-        channel_id = int(os.environ["RSS_CHANNEL_ID"])
+        channel_id = int(os.environ["CHANNEL_ID"])
         channel = self.bot.get_channel(channel_id)
 
         while not self.bot.is_closed(): # ボットが終了するまで繰り返す
@@ -23,7 +23,7 @@ class RSSHandler:
                         # 新しいエントリーがあれば、メッセージを送信
                         if last_entry_id != latest_entry.id:
                             self.latest_entry_ids[rss_url] = latest_entry.id
-                            message = f"新しい記事が投稿されました！\n{latest_entry.title}\n{latest_entry.link}"
+                            message = f"新しい記事が投稿されました！\n**{latest_entry.title}**\n{latest_entry.link}"
                             await channel.send(message)
                 except Exception as e:
                     print(f"RSSフィードの処理中にエラーが発生しました: {e}")

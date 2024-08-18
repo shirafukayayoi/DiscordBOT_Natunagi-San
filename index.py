@@ -1,9 +1,15 @@
 import discord
 from discord.ext import commands
+
 import os
 import json
 from command.GoogleCalendarTemplate import CalendarMain
 from function.rss_handler import RSSHandler
+from discord.ext import tasks
+import asyncio
+from function.task_message import TaskMessage
+from typing import List
+from discord import app_commands
 
 # configファイルのパス
 CONFIG_FILE = "config.json"
@@ -13,7 +19,7 @@ def load_config():
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    return {"rss_urls": []}
+    return {"rss_urls": [], "minutes": 0}
 
 def save_config(config):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
@@ -25,7 +31,7 @@ class MyBot(commands.Bot):
         super().__init__(command_prefix=command_prefix, intents=intents)
         self.config = config
         self.rss_urls = config.get("rss_urls", [])
-        self.channel_id = 1267847147676762194  # チャンネルIDをここで設定（または環境変数から取得）
+        self.channel_id = int(os.environ["CHANNEL_ID"])  # チャンネルIDをここで設定（または環境変数から取得）
 
     async def setup_hook(self):
         await self.tree.sync()
@@ -33,6 +39,9 @@ class MyBot(commands.Bot):
 
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
+        global task_message_instance
+        task_message_instance = TaskMessage(self)  # TaskMessageのインスタンスを作成
+        task_message_instance.start()
 
         # コマンドの登録状態を確認する
         for command in self.tree.get_commands():
@@ -59,6 +68,7 @@ class MyBot(commands.Bot):
             return True
         return False
 
+
 # intentsの設定
 intents = discord.Intents.default()
 intents.message_content = True
@@ -68,6 +78,9 @@ config = load_config()
 
 # ボットの初期化
 bot = MyBot(command_prefix="!", intents=intents, config=config)
+
+# グローバル変数を定義
+task_message_instance = None
 
 # スラッシュコマンドの定義
 @bot.tree.command(name="hello", description="Says hello!")
@@ -100,6 +113,61 @@ async def listrss(interaction: discord.Interaction):
         await interaction.response.send_message(f"登録されているRSS URLリスト:\n{url_list}")
     else:
         await interaction.response.send_message("現在、登録されているRSS URLはありません。")
+
+@bot.tree.command(name='remove-rss', description='登録されているRSSフィードのURLを削除します')
+async def removerss(interaction: discord.Interaction, url: str):
+    if url in bot.rss_urls:
+        bot.rss_urls.remove(url)
+        bot.config["rss_urls"] = bot.rss_urls
+        save_config(bot.config)
+        await interaction.response.send_message(f"RSS URLが削除されました: {url}")
+    else:
+        await interaction.response.send_message(f"このRSS URLは登録されていません。")
+
+INTERVAL_MINUTES = 0
+task_message_instance = None
+
+@bot.tree.command(name='send-minute', description='指定した分数ごとにメッセージを送信するための時間を設定します')
+async def send_minute(interaction: discord.Interaction, minutes: int):
+    global INTERVAL_MINUTES
+    global task_message_instance
+
+    # 1. 分数の設定と保存
+    INTERVAL_MINUTES = minutes
+    bot.config["minutes"] = minutes
+    save_config(bot.config)
+
+    # 2. 既存のタスクインスタンスがあればキャンセル
+    if task_message_instance:
+        task_message_instance.cancel()
+
+    # 3. 新しいタスクインスタンスを作成して開始
+    task_message_instance = TaskMessage(bot)
+    task_message_instance.start()
+
+    await interaction.response.send_message(f"メッセージ送信間隔を{minutes}分に設定しました。以下のメッセージが送信されます。")
+
+
+async def autocomplete_playlist(
+    interaction: discord.Interaction,
+    current: str
+) -> List[app_commands.Choice[str]]:
+    fruits = ["とにかく詰め込め！", "ブルーアーカイブOST"]
+    choices = []
+    playlist = interaction.data.get("options")[0].get("value")
+    for fruit in fruits:
+        if playlist.lower() in fruit.lower():
+            choices.append(app_commands.Choice(name=fruit, value=fruit))
+    return choices
+
+@bot.tree.command(name='summon-playlist', description='プレイリストを呼び出します')
+@app_commands.autocomplete(playlist=autocomplete_playlist)
+async def summon_playlist(interaction: discord.Interaction, playlist: str):
+    if playlist == "とにかく詰め込め！":
+        await interaction.response.send_message("https://youtube.com/playlist?list=PLHh1qLt2rZLK4QFgf_W0pZLAMSiipfT3o&si=pf23FQmirl2agzLt")
+    elif playlist == "ブルーアーカイブOST":
+        await interaction.response.send_message("https://youtube.com/playlist?list=PLh6Ws4Fpphfqr7VL72Q6HK5Ole9YI54hv&si=yL9IWx3zvuuw3YcP")
+        # ここに特定のURLをメッセージ送信するコードを追加してください
 
 # ボットを実行
 TOKEN = os.getenv('TOKEN')

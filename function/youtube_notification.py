@@ -1,11 +1,6 @@
 import feedparser
 import asyncio
 import os
-import pickle
-import os.path
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 from google.oauth2.service_account import Credentials
 import gspread
 from datetime import datetime
@@ -15,8 +10,7 @@ load_dotenv()
 
 class GoogleSpreadsheet:
     def __init__(self):
-        self.scope = ['https://spreadsheets.google.com/feeds',
-                        'https://www.googleapis.com/auth/drive']
+        self.scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         self.creds = Credentials.from_service_account_file('sheet_credentials.json', scopes=self.scope)
         self.client = gspread.authorize(self.creds)
         self.spreadsheet = self.client.open_by_key(os.environ["SPREADSHEET_KEY"])

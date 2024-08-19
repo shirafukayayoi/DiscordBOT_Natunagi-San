@@ -20,7 +20,7 @@ def load_config():
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    return {"rss_urls": [], "minutes": 0}
+    return {"rss_urls": [], "youtube_rss": [], "minutes": 0}
 
 def save_config(config):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
@@ -73,12 +73,13 @@ class MyBot(commands.Bot):
             return True
         return False
 
-    def add_youtube_rss_url(self, name,url):
-        if self.youtube_notification.add_rss_url(name, url):
+    def add_youtube_rss_url(self, name, url):
+        if self.youtube_notification.add_rss_url(url):
             self.youtube_rss.append({"name": name, "url": url})
             self.config["youtube_rss"] = self.youtube_rss
             save_config(self.config)
             return True
+        return False
 
 # intentsの設定
 intents = discord.Intents.default()
@@ -135,9 +136,6 @@ async def removerss(interaction: discord.Interaction, url: str):
     else:
         await interaction.response.send_message(f"このRSS URLは登録されていません。")
 
-INTERVAL_MINUTES = 0
-task_message_instance = None
-
 @bot.tree.command(name='send-minute', description='指定した分数ごとにメッセージを送信するための時間を設定します')
 async def send_minute(interaction: discord.Interaction, minutes: int):
     global INTERVAL_MINUTES
@@ -168,34 +166,32 @@ async def summon_playlist(interaction: discord.Interaction, playlist: str):
 
 @bot.tree.command(name='youtube-set-rss', description='YouTubeのRSSフィードのURLを追加します')
 async def youtube_setrss(interaction: discord.Interaction, name: str, url: str):
-    if bot.add_youtube_rss_url(url):
+    if bot.add_youtube_rss_url(name, url):
         await interaction.response.send_message(f"RSS URLが追加されました:\n{name} - {url}")
     else:
-        await interaction.response.send_message(f"このRSS URLは既に追加されています。")
+        await interaction.response.send_message(f"このYouTube RSS URLは既に追加されています。")
 
 @bot.tree.command(name='youtube-list-rss', description='登録されているYouTubeのRSSフィードのURLを表示します')
 async def youtube_listrss(interaction: discord.Interaction):
     if bot.youtube_rss:
-        url_list = "\n".join(f"{entry['name']} - {entry['url']}" for entry in bot.youtube_rss)  # 順番にentryに入れる
-        await interaction.response.send_message(f"登録されているRSS URLリスト:\n{url_list}")
+
+        # 辞書型のみを処理するように修正
+        url_list = "\n".join(f"{entry['name']} - {entry['url']}" for entry in bot.youtube_rss if isinstance(entry, dict))
+        await interaction.response.send_message(f"登録されているYouTube RSS URLリスト:\n{url_list}")
     else:
-        await interaction.response.send_message("現在、登録されているRSS URLはありません。")
+        await interaction.response.send_message("現在、登録されているYouTube RSS URLはありません。")
 
-
-@bot.tree.command(name='youtube-remove-rss', description='登録されているYouTubeのRSSフィードの名前で削除します')
-async def youtube_removerss(interaction: discord.Interaction, name: str):
-    # 指定された名前がリスト内に存在するか確認
+@bot.tree.command(name='remove-youtube-rss', description='登録されているYouTubeのRSSフィードのURLを削除します')
+async def remove_youtube_rss(interaction: discord.Interaction, name: str):
     for entry in bot.youtube_rss:
         if entry["name"] == name:
-            # 該当するエントリを削除
             bot.youtube_rss.remove(entry)
             bot.config["youtube_rss"] = bot.youtube_rss
             save_config(bot.config)
             await interaction.response.send_message(f"RSS URLが削除されました: {name} - {entry['url']}")
             return
     
-    # 名前が見つからなかった場合
-    await interaction.response.send_message(f"指定された名前のRSS URLは登録されていません。")
+    await interaction.response.send_message(f"指定された名前のYouTube RSS URLは登録されていません。")
 
 @bot.tree.command(name='remove-text', description='指定したユーザーのメッセージを削除します')
 async def remove_text(interaction: discord.Interaction, user: discord.User, limit: int):
@@ -203,7 +199,6 @@ async def remove_text(interaction: discord.Interaction, user: discord.User, limi
         await interaction.response.send_message("50以下にして！！！")
         return
 
-    # 先にレスポンスを送信するために defer() を使用
     await interaction.response.defer()
 
     async for message in interaction.channel.history(limit=limit):

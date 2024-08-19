@@ -27,41 +27,45 @@ class GoogleSpreadsheet:
         self.sheet.append_row(data)
         print("データを書き込みました")
 
-
 class YoutubeNotification:
     def __init__(self, bot):
         self.bot = bot
         self.rss_urls = bot.youtube_rss
         self.latest_entry_ids = {}  # 各RSSの最新のIDを格納する辞書
         self.google_spreadsheet = GoogleSpreadsheet()
-        self.google_spreadsheet.write_data(["Title", "Link", "Published"])
     
     async def check_rss_feed(self):
         channel_id = int(os.environ["CHANNEL_ID"])
         channel = self.bot.get_channel(channel_id)
     
+        first_run = True  # 初回の実行フラグ
+    
         while not self.bot.is_closed():  # ボットが終了するまで繰り返す
-            for rss_url in self.rss_urls:  # 登録されているRSS URLを1つずつ処理
-                try:
-                    feed = feedparser.parse(rss_url)  # RSSフィードを取得
-                    if feed.entries:
-                        latest_entry = feed.entries[0]
-                        last_entry_id = self.latest_entry_ids.get(rss_url)
+            if not first_run:  # 初回の実行ではない場合のみ処理を行う
+                for rss_url in self.rss_urls:  # 登録されているRSS URLを1つずつ処理
+                    try:
+                        feed = feedparser.parse(rss_url)  # RSSフィードを取得
+                        if feed.entries:
+                            latest_entry = feed.entries[0]
+                            last_entry_id = self.latest_entry_ids.get(rss_url)
     
-                        # 新しいエントリーがあれば、メッセージを送信
-                        if last_entry_id != latest_entry.id:
-                            self.latest_entry_ids[rss_url] = latest_entry.id
-                            
-                            # 日付を整形する
-                            # '2024-08-16T19:23:16+00:00' -> '2024/08/16 19:23:16'
-                            published_datetime = datetime.strptime(latest_entry.published, "%Y-%m-%dT%H:%M:%S%z")
-                            formatted_published = published_datetime.strftime("%Y/%m/%d %H:%M:%S")
+                            # 新しいエントリーがあれば、メッセージを送信
+                            if last_entry_id != latest_entry.id:
+                                self.latest_entry_ids[rss_url] = latest_entry.id
+                                
+                                # 日付を整形する
+                                # '2024-08-16T19:23:16+00:00' -> '2024/08/16 19:23:16'
+                                published_datetime = datetime.strptime(latest_entry.published, "%Y-%m-%dT%H:%M:%S%z")
+                                formatted_published = published_datetime.strftime("%Y/%m/%d %H:%M:%S")
     
-                            message = f"新しい動画が投稿されました！\n`{formatted_published}`\n**{latest_entry.title}**\n{latest_entry.link}"
-                            self.google_spreadsheet.write_data([latest_entry.title, latest_entry.link, formatted_published])
-                            await channel.send(message)
-                except Exception as e:
-                    print(f"RSSフィードの処理中にエラーが発生しました: {e}")
+                                message = f"新しい動画が投稿されました！\n**{latest_entry.title}**\n`{formatted_published}`\n{latest_entry.link}"
+                                self.google_spreadsheet.write_data([formatted_published, latest_entry.title, latest_entry.link])
+                                await channel.send(message)
+                    except Exception as e:
+                        print(f"RSSフィードの処理中にエラーが発生しました: {e}")
+            else:
+                first_run = False  # 初回の実行フラグをオフにする
+            await asyncio.sleep(3600)
             # 1時間ごとにRSSフィードをチェック
             await asyncio.sleep(3600)
 

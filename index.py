@@ -73,8 +73,9 @@ class MyBot(commands.Bot):
             return True
         return False
 
-    def add_youtube_rss_url(self, url):
-        if self.youtube_notification.add_rss_url(url):
+    def add_youtube_rss_url(self, name,url):
+        if self.youtube_notification.add_rss_url(name, url):
+            self.youtube_rss.append({"name": name, "url": url})
             self.config["youtube_rss"] = self.youtube_rss
             save_config(self.config)
             return True
@@ -155,7 +156,7 @@ async def send_minute(interaction: discord.Interaction, minutes: int):
     task_message_instance = TaskMessage(bot)
     task_message_instance.start()
 
-    await interaction.response.send_message(f"メッセージ送信間隔を{minutes}分に設定しました。以下のメッセージが送信されます。")
+    await interaction.response.send_message(f"メッセージ送信間隔を{minutes}分に設定しました。")
 
 @bot.tree.command(name='summon-playlist', description='プレイリストを呼び出します')
 @app_commands.autocomplete(playlist=autocomplete_playlist)
@@ -166,29 +167,35 @@ async def summon_playlist(interaction: discord.Interaction, playlist: str):
         await interaction.response.send_message("https://youtube.com/playlist?list=PLh6Ws4Fpphfqr7VL72Q6HK5Ole9YI54hv&si=yL9IWx3zvuuw3YcP")
 
 @bot.tree.command(name='youtube-set-rss', description='YouTubeのRSSフィードのURLを追加します')
-async def youtube_setrss(interaction: discord.Interaction, url: str):
+async def youtube_setrss(interaction: discord.Interaction, name: str, url: str):
     if bot.add_youtube_rss_url(url):
-        await interaction.response.send_message(f"RSS URLが追加されました: {url}")
+        await interaction.response.send_message(f"RSS URLが追加されました:\n{name} - {url}")
     else:
         await interaction.response.send_message(f"このRSS URLは既に追加されています。")
 
 @bot.tree.command(name='youtube-list-rss', description='登録されているYouTubeのRSSフィードのURLを表示します')
 async def youtube_listrss(interaction: discord.Interaction):
     if bot.youtube_rss:
-        url_list = "\n".join(bot.youtube_rss)
+        url_list = "\n".join(f"{entry['name']} - {entry['url']}" for entry in bot.youtube_rss)  # 順番にentryに入れる
         await interaction.response.send_message(f"登録されているRSS URLリスト:\n{url_list}")
     else:
         await interaction.response.send_message("現在、登録されているRSS URLはありません。")
 
-@bot.tree.command(name='youtube-remove-rss', description='登録されているYouTubeのRSSフィードのURLを削除します')
-async def youtube_removerss(interaction: discord.Interaction, url: str):
-    if url in bot.youtube_rss:
-        bot.youtube_rss.remove(url)
-        bot.config["youtube_rss"] = bot.youtube_rss
-        save_config(bot.config)
-        await interaction.response.send_message(f"RSS URLが削除されました: {url}")
-    else:
-        await interaction.response.send_message(f"このRSS URLは登録されていません。")
+
+@bot.tree.command(name='youtube-remove-rss', description='登録されているYouTubeのRSSフィードの名前で削除します')
+async def youtube_removerss(interaction: discord.Interaction, name: str):
+    # 指定された名前がリスト内に存在するか確認
+    for entry in bot.youtube_rss:
+        if entry["name"] == name:
+            # 該当するエントリを削除
+            bot.youtube_rss.remove(entry)
+            bot.config["youtube_rss"] = bot.youtube_rss
+            save_config(bot.config)
+            await interaction.response.send_message(f"RSS URLが削除されました: {name} - {entry['url']}")
+            return
+    
+    # 名前が見つからなかった場合
+    await interaction.response.send_message(f"指定された名前のRSS URLは登録されていません。")
 
 @bot.tree.command(name='remove-text', description='指定したユーザーのメッセージを削除します')
 async def remove_text(interaction: discord.Interaction, user: discord.User, limit: int):

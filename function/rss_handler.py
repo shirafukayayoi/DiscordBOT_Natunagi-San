@@ -68,7 +68,7 @@ class RSSHandler:
         # 最新の記事がなかった場合の通知
         if notify_no_update and not has_new_content:    # コマンドからの呼び出しで、新しい記事がなかった場合
             await channel.send("最新の記事がないよ！！")
-            print("最新の記事がないため通知しました。")
+            print("最新の記事がないため通知しませんでした")
             
     def add_rss_url(self, url):
         if url not in self.rss_urls:

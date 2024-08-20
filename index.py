@@ -194,7 +194,7 @@ async def youtube_listrss(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("現在、登録されているYouTube RSS URLはありません。")
 
-@bot.tree.command(name='remove-youtube-rss', description='登録されているYouTubeのRSSフィードのURLを削除します')
+@bot.tree.command(name='youtube-remove-rss', description='登録されているYouTubeのRSSフィードのURLを削除します')
 async def remove_youtube_rss(interaction: discord.Interaction, name: str):
     for entry in bot.youtube_rss:
         if entry["name"] == name:
@@ -205,6 +205,17 @@ async def remove_youtube_rss(interaction: discord.Interaction, name: str):
             return
     
     await interaction.response.send_message(f"指定された名前のYouTube RSS URLは登録されていません。")
+
+@bot.tree.command(name='youtube-now', description='YouTubeのRSSの確認をします')
+async def youtube_now(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    try:
+        await bot.youtube_notification.send_message(notify_no_update=True)
+        await interaction.followup.send("YouTube RSSの確認が完了しました。")
+    except Exception as e:
+        await interaction.followup.send(f"エラーが発生しました: {e}")
+        print(f"エラー発生: {e}")
 
 @bot.tree.command(name='remove-text', description='指定したユーザーのメッセージを削除します')
 async def remove_text(interaction: discord.Interaction, user: discord.User, limit: int):

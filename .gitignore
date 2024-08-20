@@ -1,9 +1,7 @@
 Calendar_credentials.json
 memo.py
 token.json
-command/__pycache__/GoogleCalendarTemplate.cpython-312.pyc
 .env
 config.json
 sheet_credentials.json
-function/__pycache__/youtube_notification.cpython-312.pyc
-function/__pycache__/rss_handler.cpython-312.pyc
+*pyc

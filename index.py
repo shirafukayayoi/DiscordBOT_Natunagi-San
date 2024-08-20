@@ -111,14 +111,14 @@ async def calendarpush(interaction: discord.Interaction, eventname: str, eventda
     except Exception as e:
         await interaction.response.send_message(f"エラーが発生しました: {e}")
 
-@bot.tree.command(name='set-rss', description='RSSフィードのURLを追加します')
+@bot.tree.command(name='rss-set', description='RSSフィードのURLを追加します')
 async def setrss(interaction: discord.Interaction, url: str):
     if bot.add_rss_url(url):
         await interaction.response.send_message(f"RSS URLが追加されました: {url}")
     else:
         await interaction.response.send_message(f"このRSS URLは既に追加されています。")
 
-@bot.tree.command(name='list-rss', description='登録されているRSSフィードのURLを表示します')
+@bot.tree.command(name='rss-list', description='登録されているRSSフィードのURLを表示します')
 async def listrss(interaction: discord.Interaction):
     if bot.rss_urls:
         url_list = "\n".join(bot.rss_urls)
@@ -126,7 +126,7 @@ async def listrss(interaction: discord.Interaction):
     else:
         await interaction.response.send_message("現在、登録されているRSS URLはありません。")
 
-@bot.tree.command(name='remove-rss', description='登録されているRSSフィードのURLを削除します')
+@bot.tree.command(name='rss-remove', description='登録されているRSSフィードのURLを削除します')
 async def removerss(interaction: discord.Interaction, url: str):
     if url in bot.rss_urls:
         bot.rss_urls.remove(url)
@@ -135,6 +135,19 @@ async def removerss(interaction: discord.Interaction, url: str):
         await interaction.response.send_message(f"RSS URLが削除されました: {url}")
     else:
         await interaction.response.send_message(f"このRSS URLは登録されていません。")
+
+@bot.tree.command(name='rss-now', description='RSSの確認をします')
+async def rssnow(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    try:
+        await bot.rss_handler.send_message(notify_no_update=True)
+        # followup.sendは5秒以内に行う必要がある、考え中…という文字が変わる
+        await interaction.followup.send("RSSの確認が完了しました。")
+    except Exception as e:
+        # エラー発生時も、一度だけ応答します
+        await interaction.followup.send(f"エラーが発生しました: {e}")
+        print(f"エラー発生: {e}")
 
 @bot.tree.command(name='send-minute', description='指定した分数ごとにメッセージを送信するための時間を設定します')
 async def send_minute(interaction: discord.Interaction, minutes: int):
@@ -176,7 +189,7 @@ async def youtube_listrss(interaction: discord.Interaction):
     if bot.youtube_rss:
 
         # 辞書型のみを処理するように修正
-        url_list = "\n".join(f"{entry['name']} - {entry['url']}" for entry in bot.youtube_rss if isinstance(entry, dict))
+        url_list = "\n".join(f"{entry['name']}  {entry['url']}" for entry in bot.youtube_rss if isinstance(entry, dict))
         await interaction.response.send_message(f"登録されているYouTube RSS URLリスト:\n{url_list}")
     else:
         await interaction.response.send_message("現在、登録されているYouTube RSS URLはありません。")

@@ -8,6 +8,7 @@ from typing import List
 from discord import app_commands
 from autocomplete.auto_playlist import autocomplete_playlist
 from command.Gboard_Change import process_file
+from autocomplete.auto_youtube_name import autocomplete_youtube
 
 # configファイルのパス
 CONFIG_FILE = "config.json"
@@ -120,6 +121,7 @@ def setup(bot: commands.Bot):
             await interaction.response.send_message("現在、登録されているYouTube RSS URLはありません。")
 
     @bot.tree.command(name='youtube-remove-rss', description='登録されているYouTubeのRSSフィードのURLを削除します')
+    @app_commands.autocomplete(name=autocomplete_youtube)
     async def remove_youtube_rss(interaction: discord.Interaction, name: str):
         entry_to_remove = None
         # youtube_rssから削除するエントリを探す

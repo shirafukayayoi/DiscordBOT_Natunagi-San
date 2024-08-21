@@ -48,6 +48,7 @@ class RSSHandler:
         for rss_url in self.rss_urls:  # 登録されているRSS URLを1つずつ処理
             try:
                 feed = feedparser.parse(rss_url)  # RSSフィードを取得
+                print(f"checking {rss_url}...")
                 
                 if feed.entries:
                     latest_entry = feed.entries[0]

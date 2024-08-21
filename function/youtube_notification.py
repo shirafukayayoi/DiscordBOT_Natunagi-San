@@ -75,6 +75,7 @@ class YoutubeNotification:
         for rss_url in self.rss_urls:
             try:
                 feed = feedparser.parse(rss_url)
+                print(f"Checking {rss_url}...")  # デバッグ用ログ
                 
                 if feed.entries:
 

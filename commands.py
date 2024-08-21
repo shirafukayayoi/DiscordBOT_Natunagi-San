@@ -120,15 +120,30 @@ def setup(bot: commands.Bot):
             await interaction.response.send_message("現在、登録されているYouTube RSS URLはありません。")
 
     @bot.tree.command(name='youtube-remove-rss', description='登録されているYouTubeのRSSフィードのURLを削除します')
-    async def youtube_removerss(interaction: discord.Interaction, url: str):
-        # YouTube RSSフィードを削除する関数
-        if any(entry.get("url") == url for entry in bot.youtube_rss if isinstance(entry, dict)):
-            bot.youtube_rss = [entry for entry in bot.youtube_rss if not (isinstance(entry, dict) and entry.get("url") == url)]
+    async def remove_youtube_rss(interaction: discord.Interaction, name: str):
+        entry_to_remove = None
+        # youtube_rssから削除するエントリを探す
+        for entry in bot.youtube_rss:
+            if isinstance(entry, dict) and entry.get("name") == name:
+                entry_to_remove = entry
+                break
+        
+        if entry_to_remove:
+            # youtube_rssからエントリを削除
+            bot.youtube_rss.remove(entry_to_remove)
+            
+            # youtube_latest_entry_idsから対応するURLを削除
+            url_to_remove = entry_to_remove["url"]
+            if url_to_remove in bot.config["youtube_latest_entry_ids"]:
+                del bot.config["youtube_latest_entry_ids"][url_to_remove]
+            
+            # 設定を保存
             bot.config["youtube_rss"] = bot.youtube_rss
             save_config(bot.config)
-            await interaction.response.send_message(f"YouTube RSS URLが削除されました: {url}")
+            
+            await interaction.response.send_message(f"RSS URLが削除されました: {name} - {entry_to_remove['url']}")
         else:
-            await interaction.response.send_message(f"このYouTube RSS URLは登録されていません。")
+            await interaction.response.send_message(f"指定された名前のRSSフィードが見つかりませんでした: {name}")
     
     @bot.tree.command(name='youtube-now', description='YouTubeのRSSの確認をします')
     async def youtube_now(interaction: discord.Interaction):

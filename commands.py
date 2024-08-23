@@ -80,7 +80,6 @@ def setup(bot: commands.Bot):
     @bot.tree.command(name='send-minute', description='指定した分数ごとにメッセージを送信するための時間を設定します')
     async def send_minute(interaction: discord.Interaction, minutes: int):
         global INTERVAL_MINUTES
-        global task_message_instance
 
         # 1. 分数の設定と保存
         INTERVAL_MINUTES = minutes
@@ -88,12 +87,12 @@ def setup(bot: commands.Bot):
         save_config(bot.config)
 
         # 2. 既存のタスクインスタンスがあればキャンセル
-        if task_message_instance:
-            task_message_instance.cancel()
+        if bot.task_message_instance:
+            bot.task_message_instance.cancel()
 
         # 3. 新しいタスクインスタンスを作成して開始
-        task_message_instance = TaskMessage(bot)
-        task_message_instance.start()
+        bot.task_message_instance = TaskMessage(bot)
+        bot.task_message_instance.start()
 
         await interaction.response.send_message(f"メッセージ送信間隔を{minutes}分に設定しました。")
 

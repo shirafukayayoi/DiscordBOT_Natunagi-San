@@ -21,29 +21,27 @@ def save_config(config):
         json.dump(config, f, indent=4, ensure_ascii=False)
 
 # ボットのクラス
+# MyBotクラスの定義
 class MyBot(commands.Bot):
     def __init__(self, command_prefix, intents, config):
         super().__init__(command_prefix=command_prefix, intents=intents)
         self.config = config
         self.rss_urls = config.get("rss_urls", [])
         self.youtube_rss = config.get("youtube_rss", [])
-        self.channel_id = int(os.environ["CHANNEL_ID"])  # チャンネルIDをここで設定（または環境変数から取得）
-
-    async def setup_hook(self):
-        # コマンドをセットアップする
-        await self.tree.sync()
-        print('Commands synced.')
+        self.channel_id = int(os.environ["CHANNEL_ID"])  # チャンネルIDをここで設定
+        self.task_message_instance = None  # TaskMessageインスタンスを保持するプロパティを追加
 
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
-        global task_message_instance
-        task_message_instance = TaskMessage(self)  # TaskMessageのインスタンスを作成
-        task_message_instance.start()
+        
+        # TaskMessageのインスタンスを作成
+        self.task_message_instance = TaskMessage(self)  
+        self.task_message_instance.start()
 
         # コマンドの登録状態を確認する
         for command in self.tree.get_commands():
             print(f'Command: {command.name}')
-        print('------')
+        print('-------------------------')
 
         # ステータス設定
         activity = discord.Streaming(name="夏凪優羽がサポートするよ！！！", url="https://www.twitch.tv/shirafukayayoi")

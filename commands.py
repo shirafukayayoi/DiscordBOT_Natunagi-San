@@ -2,13 +2,15 @@ import discord
 from discord.ext import commands
 import os
 import json
-from command.GoogleCalendarTemplate import CalendarMain
+from command.GoogleCalendarTemplate import CalendarPush
 from function.task_message import TaskMessage
 from typing import List
 from discord import app_commands
 from autocomplete.auto_playlist import autocomplete_playlist
 from command.Gboard_Change import process_file
 from autocomplete.auto_youtube_name import autocomplete_youtube
+from command.YoutubeTemplate import YoutubeTemplate
+from command.GoogleCalendarTemplate import YoutubePush
 
 # configファイルのパス
 CONFIG_FILE = "config.json"
@@ -36,7 +38,7 @@ def setup(bot: commands.Bot):
             return
 
         try:
-            calendarpush = CalendarMain(eventname, eventdate)
+            calendarpush = CalendarPush(eventname, eventdate)
             await interaction.response.send_message(f"イベント名: `{eventname}`\n日付: `{eventdate}`\nを追加しました")
         except Exception as e:
             await interaction.response.send_message(f"エラーが発生しました: {e}")
@@ -156,6 +158,30 @@ def setup(bot: commands.Bot):
         except Exception as e:
             await interaction.followup.send(f"エラーが発生しました: {e}")
             print(f"エラー発生: {e}")
+    
+    @bot.tree.command(name='youtube-push', description='Youtubeの通知をGoogleカレンダーに追加します')
+    async def youtube_push(interaction: discord.Interaction, youtube_url: str):
+        await interaction.response.defer()
+
+        try:
+            youtubepush = YoutubeTemplate(youtube_url)
+            result = youtubepush.get_scheduled_live_info()
+
+            if not result:
+                raise ValueError("ライブ配信情報が取得できませんでした")
+
+            title, scheduled_start_time_tokyo = result
+
+            googlepush = YoutubePush(title, scheduled_start_time_tokyo, youtube_url)
+            if not interaction.response.is_done():
+                await interaction.followup.send(f"タイトル: `{title}`\n予定開始時間 (Asia/Tokyo): `{scheduled_start_time_tokyo}`\nを追加しました\nURL: {youtube_url}")
+
+        except Exception as e:
+            if not interaction.response.is_done():
+                await interaction.followup.send(f"エラーが発生しました: {str(e)}")
+            else:
+                # レスポンスがすでに送信された後にエラーが発生した場合はログに記録する
+                print(f"エラーが発生しましたが、メッセージは既に送信されています: {str(e)}")
 
     @bot.tree.command(name='remove-text', description='指定したユーザーのメッセージを削除します')
     async def remove_text(interaction: discord.Interaction, user: discord.User, limit: int):

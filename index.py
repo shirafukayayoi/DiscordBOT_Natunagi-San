@@ -38,6 +38,10 @@ class MyBot(commands.Bot):
         self.task_message_instance = TaskMessage(self)  
         self.task_message_instance.start()
 
+        # コマンドの同期
+        await self.tree.sync()
+        print('Commands synchronized.')
+        
         # コマンドの登録状態を確認する
         for command in self.tree.get_commands():
             print(f'Command: {command.name}')

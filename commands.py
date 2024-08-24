@@ -73,8 +73,8 @@ def setup(bot: commands.Bot):
         await interaction.response.defer()
 
         try:
-            await bot.rss_handler.send_message(notify_no_update=True)
-            await interaction.followup.send("RSSの確認が完了しました。")
+            result_message = await bot.rss_handler.send_message(notify_no_update=True)
+            await interaction.followup.send(result_message)
         except Exception as e:
             await interaction.followup.send(f"エラーが発生しました: {e}")
             print(f"エラー発生: {e}")
@@ -153,8 +153,13 @@ def setup(bot: commands.Bot):
         await interaction.response.defer()
 
         try:
-            await bot.youtube_notification.send_message(notify_no_update=True)
-            await interaction.followup.send("YouTube RSSの確認が完了しました。")
+            # メッセージの送信
+            result_message = await bot.youtube_notification.send_message(notify_no_update=True)
+
+            if result_message:
+                await interaction.followup.send(result_message)
+            else:
+                await interaction.followup.send("YouTube RSSの確認が完了しました。")
         except Exception as e:
             await interaction.followup.send(f"エラーが発生しました: {e}")
             print(f"エラー発生: {e}")

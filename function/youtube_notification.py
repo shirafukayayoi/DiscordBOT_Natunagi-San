@@ -109,8 +109,9 @@ class YoutubeNotification:
                 print(f"RSSフィードの処理中にエラーが発生しました: {e}")
 
         if notify_no_update and not has_new_content:
-            await channel.send("最新の動画がないよ！！")
             print("最新の動画がないため通知しません")
+            return "最新の動画がないよ！"
+        return None
 
     def add_rss_url(self, url):
         if url not in self.rss_urls:

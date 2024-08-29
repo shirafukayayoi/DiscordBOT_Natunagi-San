@@ -31,18 +31,6 @@ def setup(bot: commands.Bot):
     async def hello(interaction: discord.Interaction):
         await interaction.response.send_message("Hello!")
 
-    @bot.tree.command(name='calendarpush', description='Googleカレンダーにイベントを追加します')
-    async def calendarpush(interaction: discord.Interaction, eventname: str, eventdate: str):
-        if len(eventdate) != 8 or not eventdate.isdigit():
-            await interaction.response.send_message("日付は20240801のように入力してください")
-            return
-
-        try:
-            calendarpush = CalendarPush(eventname, eventdate)
-            await interaction.response.send_message(f"イベント名: `{eventname}`\n日付: `{eventdate}`\nを追加しました")
-        except Exception as e:
-            await interaction.response.send_message(f"エラーが発生しました: {e}")
-
     @bot.tree.command(name='rss-set', description='RSSフィードのURLを追加します')
     async def setrss(interaction: discord.Interaction, url: str):
         if bot.add_rss_url(url):
@@ -178,13 +166,10 @@ def setup(bot: commands.Bot):
             title, scheduled_start_time_tokyo = result
 
             googlepush = YoutubePush(title, scheduled_start_time_tokyo, youtube_url)
-            if not interaction.response.is_done():
-                await interaction.followup.send(f"タイトル: `{title}`\n予定開始時間 (Asia/Tokyo): `{scheduled_start_time_tokyo}`\nを追加しました\nURL: {youtube_url}")
+            await interaction.followup.send(f"タイトル: `{title}`\n予定開始時間 (Asia/Tokyo): `{scheduled_start_time_tokyo}`\nを追加しました\nURL: {youtube_url}")
 
         except Exception as e:
-            if not interaction.response.is_done():
                 await interaction.followup.send(f"エラーが発生しました: {str(e)}")
-            else:
                 # レスポンスがすでに送信された後にエラーが発生した場合はログに記録する
                 print(f"エラーが発生しましたが、メッセージは既に送信されています: {str(e)}")
 
@@ -216,3 +201,4 @@ def setup(bot: commands.Bot):
         except Exception as e:
             if not interaction.response.is_done():
                 await interaction.response.send_message("エラーが発生しました")
+

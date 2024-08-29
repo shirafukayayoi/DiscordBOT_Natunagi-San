@@ -13,7 +13,7 @@ def CalendarPush(eventname, eventdate):
     google_calendar = GoogleCalendar()   # initを実行するために必要
     google_calendar.Add_event(Calendar_id, eventname, eventdate)
 
-def YoutubePush(title,scheduled_start_time_tokyo, youtube_url):
+def YoutubePush(title, scheduled_start_time_tokyo, youtube_url):
     google_calendar = GoogleCalendar(title, scheduled_start_time_tokyo)   # initを実行するために必要
     Calendar_id = os.environ['CALENDAR_ID']
     google_calendar.Add_Youtube(Calendar_id, youtube_url)
@@ -40,27 +40,6 @@ class GoogleCalendar:
         self.title = title
         self.scheduled_start_time_tokyo = scheduled_start_time_tokyo
 
-    # Googleカレンダーにイベントを追加する
-    def Add_event(self, Calendar_id, eventname, eventdate):
-        event_name = self.title
-        event_date = self.date
-        event = {   # イベントの情報を辞書形式でまとめる
-            'summary': event_name,
-            'start': {  # 開始時間
-                'date': event_date,
-                'timeZone': 'Asia/Tokyo'
-            },
-            'end': {    # 終了時間
-                'date': event_date,
-                'timeZone': 'Asia/Tokyo'
-            },
-        }
-        self.service.events().insert(
-            calendarId= Calendar_id,
-            body=event
-        ).execute()
-        print(f"イベントを追加しました: {event_name}")
-
     def Add_Youtube(self, Calendar_id, youtube_url):
         event_name = self.title
         scheduled_start_time = self.scheduled_start_time_tokyo
@@ -80,15 +59,19 @@ class GoogleCalendar:
             'reminders': {
                 'useDefault': False,
                 'overrides': [
-                    {'method': 'popup', 'minutes': 30},  # 30分前に通知
+                    {'method': 'popup', 'minutes': 1},  # 1分前に通知
+                    {'method': 'popup', 'minutes': 60},  # 1分前に通知
                 ],
             },
         }
 
-        # Googleカレンダーにイベントを追加
-        self.service.events().insert(
-            calendarId=Calendar_id,
-            body=event
-        ).execute()
-        print(f"イベントを追加しました: {event_name}")
-
+        try:
+            # Googleカレンダーにイベントを追加
+            self.service.events().insert(
+                calendarId=Calendar_id,
+                body=event
+            ).execute()
+            print(f"イベントを追加しました: {event_name}")
+        except Exception as e:
+            print(f"Googleカレンダーへのイベント追加でエラーが発生しました: {str(e)}")
+            return event_name, scheduled_start_time

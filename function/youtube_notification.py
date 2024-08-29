@@ -24,7 +24,6 @@ class GoogleSpreadsheet:
 class YoutubeNotification:
     def __init__(self, bot):
         self.bot = bot
-        self.check_interval = bot.config.get("minutes", 60) * 60  # 分を秒に変換
         self.google_spreadsheet = GoogleSpreadsheet()
 
     def load_youtube_rss_urls(self):
@@ -62,7 +61,7 @@ class YoutubeNotification:
     async def check_rss_feed(self):
         while not self.bot.is_closed():  # ボットが終了するまで繰り返す
             await self.send_message()  # RSSフィードを確認してメッセージを送信
-            await asyncio.sleep(self.check_interval)  # 指定された時間ごとにRSSフィードをチェック
+            await asyncio.sleep(3600)  # 指定された時間ごとにRSSフィードをチェック
 
     async def send_message(self, notify_no_update=False):
         channel_id = int(os.environ["CHANNEL_ID"])

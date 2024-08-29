@@ -36,6 +36,7 @@ class MyBot(commands.Bot):
         
         # TaskMessageのインスタンスを作成
         self.task_message_instance = TaskMessage(self)  
+        print('TaskMessage instance created.')
         self.task_message_instance.start()
 
         # コマンドの同期

@@ -11,8 +11,6 @@ class RSSHandler:
         # config.json から latest_entry_ids を読み込む
         self.latest_entry_ids = self.load_latest_entry_ids()
 
-        self.check_interval = bot.config.get("minutes", 60) * 60  # 分を秒に変換
-
     def load_latest_entry_ids(self):
         """ config.json から最新のエントリーIDを読み込む """
         try:
@@ -37,7 +35,7 @@ class RSSHandler:
     async def check_rss_feed(self):
         while not self.bot.is_closed():  # ボットが終了するまで繰り返す
             await self.send_message()  # RSSフィードを確認してメッセージを送信
-            await asyncio.sleep(self.check_interval)  # 指定された時間ごとにRSSフィードをチェック
+            await asyncio.sleep(3600)  # 指定された時間ごとにRSSフィードをチェック
 
     async def send_message(self, notify_no_update=False):   # コマンドからの呼び出しの場合は notify_no_update=True
         channel_id = int(os.environ["CHANNEL_ID"])
@@ -63,6 +61,7 @@ class RSSHandler:
                         
                         # 最新のIDを config.json に保存
                         self.save_latest_entry_ids()
+                        print(f"New entry: {latest_entry.title}")
             except Exception as e:
                 print(f"RSSフィードの処理中にエラーが発生しました: {e}")
 

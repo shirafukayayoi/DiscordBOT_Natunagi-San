@@ -1,0 +1,7 @@
+discord.py
+feedparser
+gspread
+python-dotenv
+google-auth
+google-api-python-client
+pytz

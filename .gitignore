@@ -6,3 +6,5 @@ config.json
 sheet_credentials.json
 *pyc
 Download/
+drive_credentials.json
+token.pickle

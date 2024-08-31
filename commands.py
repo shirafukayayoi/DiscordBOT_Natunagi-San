@@ -7,6 +7,7 @@ from function.task_message import TaskMessage
 from typing import List
 from discord import app_commands
 from autocomplete.auto_playlist import autocomplete_playlist
+from autocomplete.auto_get_SpreadSheet import autocomplete_getspreadsheet
 from command.Gboard_Change import process_file
 from autocomplete.auto_youtube_name import autocomplete_youtube
 from command.YoutubeTemplate import YoutubeTemplate
@@ -14,6 +15,7 @@ from command.GoogleCalendarTemplate import YoutubePush
 from command.youtube_dowload import YoutubeDownload
 from command.Novel_Sale_List import get_novel_data
 from command.Novel_Sale_List import get_manga_data
+from command.Bookwalker_get_salelist import get_spreadsheet
 
 # configファイルのパス
 CONFIG_FILE = "config.json"
@@ -286,3 +288,31 @@ def setup(bot: commands.Bot):
                 await interaction.followup.send(embed=embed)
         except Exception as e:
             await interaction.followup.send(f"エラーが発生しました: {str(e)}")
+    
+    @bot.tree.command(name="bookwalker-salelist", description="Googleドライブに保存されているBOOKWALKERのセール情報を表示します")
+    @app_commands.autocomplete(salelist=autocomplete_getspreadsheet)
+    async def bookwalker_salelist(interaction: discord.Interaction, salelist: str):
+        await interaction.response.defer()
+        try:
+            spreadsheets = get_spreadsheet(os.getenv('BOOKWALKER_FOLDER_ID'))
+
+            if spreadsheets:
+                # 一致するスプレッドシートを検索
+                matching_spreadsheet = None
+                salelist_clean = salelist.strip()  # salelist の前後の空白を削除
+                for item in spreadsheets:
+                    item_name_clean = item['name'].strip()  # item['name'] の前後の空白を削除
+                    if item_name_clean == salelist_clean:
+                        matching_spreadsheet = item
+                        break
+
+                if matching_spreadsheet:
+                    url = f"https://docs.google.com/spreadsheets/d/{matching_spreadsheet['id']}"
+                    await interaction.followup.send(f"こちらが該当するセール情報のファイルです:\n{url}")
+                else:
+                    await interaction.followup.send("該当するセール情報が見つかりませんでした")
+            else:
+                await interaction.followup.send("スプレッドシートが見つかりませんでした")
+        except Exception as e:
+            await interaction.followup.send(f"エラーが発生しました: {str(e)}")
+            print(f"エラー発生: {e}")

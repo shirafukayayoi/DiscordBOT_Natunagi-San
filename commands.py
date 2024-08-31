@@ -198,7 +198,7 @@ def setup(bot: commands.Bot):
                 await interaction.followup.send("ファイルが大きすぎます")
             else:
                 await interaction.followup.send(
-                    content=f"ダウンロード完了:\n`{title}`",
+                    content=f"ダウンロード完了:\n**{title}**",
                     file=discord.File(file_path)
                 )
             

@@ -66,7 +66,4 @@ class GoogleDriveAuth:
         if not items:
             print('No files found.')
         else:
-            print('Files:')
-            for item in items:
-                print(f"{item['name']} ({item['id']})")
-        return items
+            return items

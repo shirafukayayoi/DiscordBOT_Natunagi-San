@@ -12,7 +12,7 @@ from command.Gboard_Change import process_file
 from autocomplete.auto_youtube_name import autocomplete_youtube
 from command.YoutubeTemplate import YoutubeTemplate
 from command.GoogleCalendarTemplate import YoutubePush
-from command.youtube_dowload import YoutubeDownload
+from command.youtube_download import YoutubeDownload
 from command.Novel_Sale_List import get_novel_data
 from command.Novel_Sale_List import get_manga_data
 from command.Bookwalker_get_salelist import get_spreadsheet
@@ -189,7 +189,7 @@ def setup(bot: commands.Bot):
     async def youtube_download(interaction: discord.Interaction, url: str):
         await interaction.response.defer()
         try:
-            file_path, title = YoutubeDownload(url)
+            file_path, title = await YoutubeDownload(url)
 
             # ファイルサイズを確認する
             file_size = os.path.getsize(file_path)

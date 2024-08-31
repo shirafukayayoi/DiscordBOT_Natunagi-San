@@ -12,6 +12,8 @@ from autocomplete.auto_youtube_name import autocomplete_youtube
 from command.YoutubeTemplate import YoutubeTemplate
 from command.GoogleCalendarTemplate import YoutubePush
 from command.youtube_dowload import YoutubeDownload
+from command.Novel_Sale_List import get_novel_data
+from command.Novel_Sale_List import get_manga_data
 
 # configファイルのパス
 CONFIG_FILE = "config.json"
@@ -228,3 +230,52 @@ def setup(bot: commands.Bot):
             if not interaction.response.is_done():
                 await interaction.response.send_message("エラーが発生しました")
 
+    @bot.tree.command(name="novel-moneylist", description="登録しているラノベの金額を表示します")
+    async def novel_moneylist(interaction: discord.Interaction):
+        await interaction.response.defer()
+        try:
+            novel_data = get_novel_data()
+            if not novel_data:
+                await interaction.followup.send("データがありません")
+            else:
+                embed = discord.Embed(title="ラノベ金額一覧", color=discord.Color.blue())
+                
+                for title, url, total, sum in novel_data:
+                    # URLをマークダウン記法でリンクにする
+                    link = f"[Link]({url})"
+                    # Embedに各小説の情報を追加
+                    embed.add_field(
+                        name=title,
+                        value=f"金額: {sum} / 巻数: {total} / {link}",
+                        inline=False
+                    )
+                
+                # Embedを送信
+                await interaction.followup.send(embed=embed)
+        except Exception as e:
+            await interaction.followup.send(f"エラーが発生しました: {str(e)}")
+
+    @bot.tree.command(name="manga-moneylist", description="登録している漫画の金額を表示します")
+    async def manga_moneylist(interaction: discord.Interaction):
+        await interaction.response.defer()
+        try:
+            novel_data = get_manga_data()
+            if not novel_data:
+                await interaction.followup.send("データがありません")
+            else:
+                embed = discord.Embed(title="漫画金額一覧", color=discord.Color.blue())
+                
+                for title, url, total, sum in novel_data:
+                    # URLをマークダウン記法でリンクにする
+                    link = f"[Link]({url})"
+                    # Embedに各小説の情報を追加
+                    embed.add_field(
+                        name=title,
+                        value=f"金額: {sum} / 巻数: {total} / {link}",
+                        inline=False
+                    )
+                
+                # Embedを送信
+                await interaction.followup.send(embed=embed)
+        except Exception as e:
+            await interaction.followup.send(f"エラーが発生しました: {str(e)}")

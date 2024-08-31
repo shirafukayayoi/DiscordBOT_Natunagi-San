@@ -5,16 +5,23 @@ def YoutubeDownload(url):
     # オプション
     ydl_opts = {
         'format': 'bestvideo+bestaudio/best',  # 最良の画質と音質をダウンロード
-        'outtmpl': 'Download/video.%(ext)s'  # ダウンロードファイル名
+        'outtmpl': 'Download/video.%(ext)s',  # ダウンロードファイル名
+        'postprocessors': [{  # MP4に変換するためのオプション
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp4',  # MP4形式に変換
+        }],
+        'postprocessor_args': [
+            '-crf', '18',  # クオリティ設定 (数値が低いほど高品質)
+        ],
+        'prefer_ffmpeg': True,  # FFmpegを使用して変換
     }
+    
     with YoutubeDL(ydl_opts) as ydl:
-        info_dict = ydl.extract_info(url, download=False)  # 情報を取得するがダウンロードはしない
+        info_dict = ydl.extract_info(url, download=True)  # 情報を取得し、ダウンロードも行う
         title = info_dict.get('title', None)
-        ext = info_dict.get('ext', 'webm')
-        file_path = f"Download/video.{ext}"
+        file_path = ydl.prepare_filename(info_dict)  # ダウンロードしたファイルのパス
         
-        # 実際にダウンロードを行う
-        ydl.download(url)
         print(f"ダウンロード完了: {file_path}")
+        
     # ダウンロードしたファイルのパスを返す
     return file_path, title

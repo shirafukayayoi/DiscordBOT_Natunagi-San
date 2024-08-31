@@ -308,7 +308,7 @@ def setup(bot: commands.Bot):
 
                 if matching_spreadsheet:
                     url = f"https://docs.google.com/spreadsheets/d/{matching_spreadsheet['id']}"
-                    await interaction.followup.send(f"こちらが該当するセール情報のファイルです:\n{url}")
+                    await interaction.followup.send(f"これがセール情報のファイルだよ！！:\n{url}")
                 else:
                     await interaction.followup.send("該当するセール情報が見つかりませんでした")
             else:

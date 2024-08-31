@@ -43,11 +43,14 @@ def setup(bot: commands.Bot):
 
     @bot.tree.command(name='rss-list', description='登録されているRSSフィードのURLを表示します')
     async def listrss(interaction: discord.Interaction):
-        if bot.rss_urls:
-            url_list = "\n".join(bot.rss_urls)
-            await interaction.response.send_message(f"登録されているRSS URLリスト:\n{url_list}")
-        else:
-            await interaction.response.send_message("現在、登録されているRSS URLはありません。")
+        embed = discord.Embed(title="登録されているRSSフィードのURLリスト",color=discord.Color.dark_gray())
+        for url in bot.rss_urls:
+            embed.add_field(
+                name=url,
+                value="",
+                inline=False
+            )
+        await interaction.response.send_message(embed=embed)
 
     @bot.tree.command(name='rss-remove', description='登録されているRSSフィードのURLを削除します')
     async def removerss(interaction: discord.Interaction, url: str):
@@ -106,11 +109,15 @@ def setup(bot: commands.Bot):
 
     @bot.tree.command(name='youtube-list-rss', description='登録されているYouTubeのRSSフィードのURLを表示します')
     async def youtube_listrss(interaction: discord.Interaction):
-        if bot.youtube_rss:
-            url_list = "\n".join(f"{entry['name']}  {entry['url']}" for entry in bot.youtube_rss if isinstance(entry, dict))
-            await interaction.response.send_message(f"登録されているYouTube RSS URLリスト:\n{url_list}")
-        else:
-            await interaction.response.send_message("現在、登録されているYouTube RSS URLはありません。")
+        embed = discord.Embed(title="登録されているYouTube RSSフィードのURLリスト",color=discord.Color.red())
+        for entry in bot.youtube_rss:
+            embed.add_field(
+                name=entry["name"],
+                value=entry["url"],
+                inline=False
+            )
+
+        await interaction.response.send_message(embed=embed)
 
     @bot.tree.command(name='youtube-remove-rss', description='登録されているYouTubeのRSSフィードのURLを削除します')
     @app_commands.autocomplete(name=autocomplete_youtube)

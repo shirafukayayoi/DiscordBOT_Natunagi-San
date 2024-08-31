@@ -64,7 +64,7 @@ class YoutubeNotification:
             await asyncio.sleep(3600)  # 指定された時間ごとにRSSフィードをチェック
 
     async def send_message(self, notify_no_update=False):
-        channel_id = int(os.environ["CHANNEL_ID"])
+        channel_id = int(os.environ["YOUTUBE_CHANNEL_ID"])
         channel = self.bot.get_channel(channel_id)
 
         self.rss_urls = self.load_youtube_rss_urls()  # YouTube RSS URL の読み込み
@@ -75,12 +75,12 @@ class YoutubeNotification:
             try:
                 feed = feedparser.parse(rss_url)
                 print(f"Checking {rss_url}...")  # デバッグ用ログ
-                
-                if feed.entries:
 
+                if feed.entries:
                     latest_entry = feed.entries[0]
                     last_entry_id = self.latest_entry_ids.get(rss_url)
 
+                    # 最新エントリーが異なる場合のみ処理を続ける
                     if last_entry_id is None or last_entry_id != latest_entry.id:
                         self.latest_entry_ids[rss_url] = latest_entry.id
 
@@ -100,7 +100,9 @@ class YoutubeNotification:
                         await channel.send(message)
                         has_new_content = True
 
+                        # 最新エントリーIDを保存する
                         self.save_latest_entry_ids()
+
                 else:
                     print(f"No entries found in {rss_url}")  # デバッグ用ログ
 

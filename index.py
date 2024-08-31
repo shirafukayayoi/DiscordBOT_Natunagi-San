@@ -28,7 +28,6 @@ class MyBot(commands.Bot):
         self.config = config
         self.rss_urls = config.get("rss_urls", [])
         self.youtube_rss = config.get("youtube_rss", [])
-        self.channel_id = int(os.environ["CHANNEL_ID"])  # チャンネルIDをここで設定
         self.task_message_instance = None  # TaskMessageインスタンスを保持するプロパティを追加
 
     async def on_ready(self):
@@ -51,12 +50,6 @@ class MyBot(commands.Bot):
         # ステータス設定
         activity = discord.Streaming(name="夏凪優羽がサポートするよ！！！", url="https://www.twitch.tv/shirafukayayoi")
         await self.change_presence(status=discord.Status.online, activity=activity)
-
-        # チャンネルの取得とRSSフィードのチェックを開始
-        channel = self.get_channel(self.channel_id)
-        if channel is None:
-            print(f"チャンネルID {self.channel_id} が見つかりません。")
-            return
 
         self.rss_handler = RSSHandler(self)
         self.loop.create_task(self.rss_handler.check_rss_feed())

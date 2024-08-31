@@ -38,7 +38,7 @@ class RSSHandler:
             await asyncio.sleep(3600)  # 指定された時間ごとにRSSフィードをチェック
 
     async def send_message(self, notify_no_update=False):   # コマンドからの呼び出しの場合は notify_no_update=True
-        channel_id = int(os.environ["CHANNEL_ID"])
+        channel_id = int(os.environ["LOGCHANNEL_ID"])
         channel = self.bot.get_channel(channel_id)
 
         has_new_content = False # 新しい記事があるかどうかの確認

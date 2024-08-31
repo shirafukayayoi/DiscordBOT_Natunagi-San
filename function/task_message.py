@@ -23,7 +23,7 @@ class TaskMessage:
             return {"minutes": 0}
 
     async def send_message(self):
-        channel_id = os.environ.get("CHANNEL_ID")
+        channel_id = os.environ.get("TASKMESSAGE_ID")
         if not channel_id:
             print("CHANNEL_ID が設定されていません。メッセージを送信できません。")
             return

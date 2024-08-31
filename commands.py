@@ -11,6 +11,7 @@ from command.Gboard_Change import process_file
 from autocomplete.auto_youtube_name import autocomplete_youtube
 from command.YoutubeTemplate import YoutubeTemplate
 from command.GoogleCalendarTemplate import YoutubePush
+from command.youtube_dowload import YoutubeDownload
 
 # configファイルのパス
 CONFIG_FILE = "config.json"
@@ -172,6 +173,31 @@ def setup(bot: commands.Bot):
                 await interaction.followup.send(f"エラーが発生しました: {str(e)}")
                 # レスポンスがすでに送信された後にエラーが発生した場合はログに記録する
                 print(f"エラーが発生しましたが、メッセージは既に送信されています: {str(e)}")
+    
+    @bot.tree.command(name='youtube-download', description='Youtubeの動画をダウンロードします')
+    async def youtube_download(interaction: discord.Interaction, url: str):
+        await interaction.response.defer()
+        try:
+            file_path, title = YoutubeDownload(url)
+
+            # ファイルサイズを確認する
+            file_size = os.path.getsize(file_path)
+            max_size_mb = 50  # 最大ファイルサイズ (MB)
+            max_size_bytes = max_size_mb * 1024 * 1024  # バイト単位に変換
+
+            if file_size > max_size_bytes:
+                await interaction.followup.send("ファイルが大きすぎます")
+            else:
+                await interaction.followup.send(
+                    content=f"ダウンロード完了:\n`{title}`",
+                    file=discord.File(file_path)
+                )
+            
+            # ダウンロード後にファイルを削除
+            os.remove(file_path)
+        
+        except Exception as e:
+            await interaction.followup.send(f"エラーが発生しました: {str(e)}")
 
     @bot.tree.command(name='remove-text', description='指定したユーザーのメッセージを削除します')
     async def remove_text(interaction: discord.Interaction, user: discord.User, limit: int):

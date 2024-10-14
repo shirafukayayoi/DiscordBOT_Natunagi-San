@@ -1,10 +1,11 @@
-import discord
-from discord import app_commands
 from typing import List
 
+import discord
+from discord import app_commands
+
+
 async def autocomplete_playlist(
-    interaction: discord.Interaction,
-    current: str
+    interaction: discord.Interaction, current: str
 ) -> List[app_commands.Choice[str]]:
     fruits = ["とにかく詰め込め！", "ブルーアーカイブOST"]
     choices = []

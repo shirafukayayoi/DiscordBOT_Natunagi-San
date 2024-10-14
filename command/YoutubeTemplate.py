@@ -1,8 +1,9 @@
-import requests
-from urllib.parse import urlparse, parse_qs
-from datetime import datetime
-import pytz
 import os
+from datetime import datetime
+from urllib.parse import parse_qs, urlparse
+
+import pytz
+import requests
 from dotenv import load_dotenv
 
 # .envファイルからAPIキーを読み込む
@@ -18,8 +19,8 @@ class YoutubeTemplate:
     def get_scheduled_live_info(self):
         # URLから動画IDを抽出
         parsed_url = urlparse(self.youtube_url)
-        video_id = parse_qs(parsed_url.query).get('v')
-        
+        video_id = parse_qs(parsed_url.query).get("v")
+
         if not video_id:
             print("無効なURLです。動画IDが見つかりません。")
             return None
@@ -50,20 +51,24 @@ class YoutubeTemplate:
         # 配信予定のライブかどうかを確認
         if live_broadcast_content == "upcoming":
             scheduled_start_time_utc = live_info.get("scheduledStartTime")
-            
+
             if scheduled_start_time_utc:
                 # UTC時間をdatetimeオブジェクトに変換
-                utc_time = datetime.strptime(scheduled_start_time_utc, "%Y-%m-%dT%H:%M:%SZ")
+                utc_time = datetime.strptime(
+                    scheduled_start_time_utc, "%Y-%m-%dT%H:%M:%SZ"
+                )
                 utc_time = utc_time.replace(tzinfo=pytz.utc)
-                
+
                 # Asia/Tokyoタイムゾーンに変換
-                tokyo_tz = pytz.timezone('Asia/Tokyo')
+                tokyo_tz = pytz.timezone("Asia/Tokyo")
                 scheduled_start_time_tokyo = utc_time.astimezone(tokyo_tz)
-                
+
                 return title, scheduled_start_time_tokyo.isoformat()
             else:
                 print("予定開始時間が見つかりません。")
                 return None
         else:
-            print(f"タイトル: {title}\n更新日: {published_at}\nこの動画は配信予定のライブではありません。")
+            print(
+                f"タイトル: {title}\n更新日: {published_at}\nこの動画は配信予定のライブではありません。"
+            )
             return None

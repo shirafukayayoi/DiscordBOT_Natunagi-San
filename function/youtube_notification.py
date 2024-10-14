@@ -1,18 +1,25 @@
-import feedparser
 import asyncio
 import json
 import os
-from google.oauth2.service_account import Credentials
-import gspread
 from datetime import datetime
+
+import feedparser
+import gspread
 from dotenv import load_dotenv
+from google.oauth2.service_account import Credentials
 
 load_dotenv()
 
+
 class GoogleSpreadsheet:
     def __init__(self):
-        self.scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        self.creds = Credentials.from_service_account_file('sheet_credentials.json', scopes=self.scope)
+        self.scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive",
+        ]
+        self.creds = Credentials.from_service_account_file(
+            "sheet_credentials.json", scopes=self.scope
+        )
         self.client = gspread.authorize(self.creds)
         self.spreadsheet = self.client.open_by_key(os.environ["SPREADSHEET_KEY"])
         self.sheet = self.spreadsheet.sheet1  # 最初のシートにアクセス
@@ -21,25 +28,29 @@ class GoogleSpreadsheet:
         self.sheet.append_row(data)
         print("データを書き込みました")
 
+
 class YoutubeNotification:
     def __init__(self, bot):
         self.bot = bot
         self.google_spreadsheet = GoogleSpreadsheet()
 
     def load_youtube_rss_urls(self):
-        """ config.json から YouTube の RSS フィードの URL を読み込む """
+        """config.json から YouTube の RSS フィードの URL を読み込む"""
         try:
-            with open('config.json', 'r') as f:
+            with open("config.json", "r") as f:
                 config = json.load(f)
-            return [item["url"] if isinstance(item, dict) else item for item in config.get("youtube_rss", [])]
+            return [
+                item["url"] if isinstance(item, dict) else item
+                for item in config.get("youtube_rss", [])
+            ]
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error loading youtube_rss urls: {e}")
             return []
 
     def load_youtube_latest_entry_ids(self):
-        """ config.json から最新のエントリーIDを読み込む """
+        """config.json から最新のエントリーIDを読み込む"""
         try:
-            with open('config.json', 'r') as f:
+            with open("config.json", "r") as f:
                 config = json.load(f)
             return config.get("youtube_latest_entry_ids", {})
         except (FileNotFoundError, json.JSONDecodeError) as e:
@@ -47,9 +58,9 @@ class YoutubeNotification:
             return {}
 
     def save_latest_entry_ids(self):
-        """ 最新のエントリーIDを config.json に保存する """
+        """最新のエントリーIDを config.json に保存する"""
         try:
-            with open('config.json', 'r+') as f:
+            with open("config.json", "r+") as f:
                 config = json.load(f)
                 config["youtube_latest_entry_ids"] = self.latest_entry_ids
                 f.seek(0)
@@ -68,7 +79,9 @@ class YoutubeNotification:
         channel = self.bot.get_channel(channel_id)
 
         self.rss_urls = self.load_youtube_rss_urls()  # YouTube RSS URL の読み込み
-        self.latest_entry_ids = self.load_youtube_latest_entry_ids()  # 最新エントリー ID の読み込み
+        self.latest_entry_ids = (
+            self.load_youtube_latest_entry_ids()
+        )  # 最新エントリー ID の読み込み
         has_new_content = False
 
         for rss_url in self.rss_urls:
@@ -85,18 +98,28 @@ class YoutubeNotification:
                         self.latest_entry_ids[rss_url] = latest_entry.id
 
                         # `published` 属性の存在をチェック
-                        published_str = getattr(latest_entry, 'published', '未知の公開日')
-                        if published_str == '未知の公開日':
-                            formatted_published = '公開日不明'
+                        published_str = getattr(
+                            latest_entry, "published", "未知の公開日"
+                        )
+                        if published_str == "未知の公開日":
+                            formatted_published = "公開日不明"
                         else:
                             try:
-                                published_datetime = datetime.strptime(published_str, "%Y-%m-%dT%H:%M:%SZ")
-                                formatted_published = published_datetime.strftime("%Y/%m/%d %H:%M:%S")
+                                published_datetime = datetime.strptime(
+                                    published_str, "%Y-%m-%dT%H:%M:%SZ"
+                                )
+                                formatted_published = published_datetime.strftime(
+                                    "%Y/%m/%d %H:%M:%S"
+                                )
                             except ValueError:
-                                formatted_published = published_str  # 日付形式が異なる場合はそのまま表示
+                                formatted_published = (
+                                    published_str  # 日付形式が異なる場合はそのまま表示
+                                )
 
                         message = f"新しい動画が投稿されました！\n**{latest_entry.title}**\n`{formatted_published}`\n{latest_entry.link}"
-                        self.google_spreadsheet.write_data([latest_entry.title, latest_entry.link, formatted_published])
+                        self.google_spreadsheet.write_data(
+                            [latest_entry.title, latest_entry.link, formatted_published]
+                        )
                         await channel.send(message)
                         has_new_content = True
 
